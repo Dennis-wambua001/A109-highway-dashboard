@@ -2,3 +2,5 @@
 *.tiff
 .conda/
 __pycache__/
+
+venv/
