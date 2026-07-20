@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A109 Highway Safety Intelligence Dashboard</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+    <!-- Professional Header -->
+    <header class="app-header text-white p-4 shadow">
+        <div class="container-fluid">
+            <div class="row align-items-center">
+                <div class="col-lg-7">
+                    <h1 class="h3 font-weight-bold mb-1">
+                        <i class="fa-solid me-2 text-warning"></i>A109 Nairobi–Mombasa Highway Road Safety Intelligence Dashboard
+                    </h1>
+                    <p class="subtitle mb-0 text-light opacity-75">
+                        Interactive Web GIS Platform for Road Safety Analysis, Terrain Assessment & Transportation Decision Support
+                    </p>
+                </div>
+                <div class="col-lg-5 text-lg-end mt-3 mt-lg-0">
+                    <div class="d-inline-block text-start bg-blue-dark p-2 px-3 rounded me-2">
+                        <small class="d-block text-uppercase fw-bold text-info">Study Area</small>
+                        <span>Mombasa CBD &rarr; Nairobi CBD</span>
+                    </div>
+                    <div class="d-inline-block text-start bg-blue-dark p-2 px-3 rounded me-2">
+                        <small class="d-block text-uppercase fw-bold text-info">Length / Elev</small>
+                        <span>482 km | 19m &rarr; 1,795m</span>
+                    </div>
+                    <div class="d-inline-block text-start bg-blue-dark p-2 px-3 rounded">
+                        <small class="d-block text-uppercase fw-bold text-info">Current Date</small>
+                        <span>{{ current_info.date }} ({{ current_info.day }}, Wk {{ current_info.week }})</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container-fluid my-4">
+
+        <!-- Global Filters Bar -->
+        <div class="card mb-4 filter-card border-0 shadow-sm">
+            <div class="card-body py-3">
+                <div class="row g-3 align-items-center">
+                    <div class="col-md-3">
+                        <label class="form-label fw-bold mb-1"><i class="fa-solid fa-map-pin me-1 text-primary"></i> County</label>
+                        <select id="filterCounty" class="form-select form-select-sm">
+                            <option value="">All Counties</option>
+                            <option value="Mombasa">Mombasa</option>
+                            <option value="Kwale">Kwale</option>
+                            <option value="Kilifi">Kilifi</option>
+                            <option value="Taita Taveta">Taita Taveta</option>
+                            <option value="Makueni">Makueni</option>
+                            <option value="Machakos">Machakos</option>
+                            <option value="Nairobi">Nairobi</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-bold mb-1"><i class="fa-solid fa-car me-1 text-primary"></i> Vehicle Type</label>
+                        <select id="filterVehicle" class="form-select form-select-sm">
+                            <option value="">All Vehicles</option>
+                            <option value="Truck">Truck</option>
+                            <option value="Trailer">Trailer</option>
+                            <option value="Bus">Bus</option>
+                            <option value="Matatu">Matatu</option>
+                            <option value="Private Car">Private Car</option>
+                            <option value="Motorcycle">Motorcycle</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-bold mb-1"><i class="fa-solid fa-triangle-exclamation me-1 text-primary"></i> Event Type</label>
+                        <select id="filterEventType" class="form-select form-select-sm">
+                            <option value="">All Event Types</option>
+                            <option value="Accident">Accident</option>
+                            <option value="Traffic Jam">Traffic Jam</option>
+                            <option value="Blackspot">Blackspot</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3 text-end pt-3">
+                        <button id="resetFilters" class="btn btn-sm btn-outline-secondary w-100">
+                            <i class="fa-solid fa-rotate-left me-1"></i> Reset Filters
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- KPI Cards Row -->
+        <div class="row g-3 mb-4">
+            <div class="col-6 col-md-4 col-xl-3">
+                <div class="card kpi-card border-0 shadow-sm p-3">
+                    <div class="d-flex align-items-center">
+                        <div class="kpi-icon bg-light-blue text-primary rounded-circle p-3 me-3"><i class="fa-solid fa-triangle-exclamation fa-xl"></i></div>
+                        <div>
+                            <small class="text-muted fw-bold">Dangerous Places</small>
+                            <h3 class="mb-0 fw-bold text-dark" id="kpiDangerous">0</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-4 col-xl-3">
+                <div class="card kpi-card border-0 shadow-sm p-3">
+                    <div class="d-flex align-items-center">
+                        <div class="kpi-icon bg-light-orange text-warning rounded-circle p-3 me-3"><i class="fa-solid fa-calendar-day fa-xl"></i></div>
+                        <div>
+                            <small class="text-muted fw-bold">Date Incidents</small>
+                            <h3 class="mb-0 fw-bold text-dark" id="kpiIncidents">0</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-4 col-xl-3">
+                <div class="card kpi-card border-0 shadow-sm p-3">
+                    <div class="d-flex align-items-center">
+                        <div class="kpi-icon bg-light-red text-danger rounded-circle p-3 me-3"><i class="fa-solid fa-skull-crossbones fa-xl"></i></div>
+                        <div>
+                            <small class="text-muted fw-bold">Fatal Accidents</small>
+                            <h3 class="mb-0 fw-bold text-dark" id="kpiFatal">0</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-4 col-xl-3">
+                <div class="card kpi-card border-0 shadow-sm p-3">
+                    <div class="d-flex align-items-center">
+                        <div class="kpi-icon bg-light-warning text-amber rounded-circle p-3 me-3"><i class="fa-solid fa-car-burst fa-xl"></i></div>
+                        <div>
+                            <small class="text-muted fw-bold">Non-Fatal Accidents</small>
+                            <h3 class="mb-0 fw-bold text-dark" id="kpiNonFatal">0</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-4 col-xl-3">
+                <div class="card kpi-card border-0 shadow-sm p-3">
+                    <div class="d-flex align-items-center">
+                        <div class="kpi-icon bg-light-yellow text-traffic rounded-circle p-3 me-3"><i class="fa-solid fa-traffic-light fa-xl"></i></div>
+                        <div>
+                            <small class="text-muted fw-bold">Traffic Jams</small>
+                            <h3 class="mb-0 fw-bold text-dark" id="kpiTraffic">0</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-4 col-xl-3">
+                <div class="card kpi-card border-0 shadow-sm p-3">
+                    <div class="d-flex align-items-center">
+                        <div class="kpi-icon bg-light-green text-success rounded-circle p-3 me-3"><i class="fa-solid fa-shield-cat fa-xl"></i></div>
+                        <div>
+                            <small class="text-muted fw-bold">Blackspots</small>
+                            <h3 class="mb-0 fw-bold text-dark" id="kpiBlackspots">0</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-4 col-xl-3">
+                <div class="card kpi-card border-0 shadow-sm p-3">
+                    <div class="d-flex align-items-center">
+                        <div class="kpi-icon bg-light-purple text-purple rounded-circle p-3 me-3"><i class="fa-solid fa-route fa-xl"></i></div>
+                        <div>
+                            <small class="text-muted fw-bold">Road Length</small>
+                            <h3 class="mb-0 fw-bold text-dark" id="kpiRoadLength">0 km</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-4 col-xl-3">
+                <div class="card kpi-card border-0 shadow-sm p-3">
+                    <div class="d-flex align-items-center">
+                        <div class="kpi-icon bg-light-gray text-dark rounded-circle p-3 me-3"><i class="fa-solid fa-map fa-xl"></i></div>
+                        <div>
+                            <small class="text-muted fw-bold">Counties Crossed</small>
+                            <h3 class="mb-0 fw-bold text-dark" id="kpiCounties">0</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Layout Section (3 Columns) -->
+        <div class="row g-4 mb-4">
+            
+            <!-- Left Panel: Layer Control & Map Symbology Legend -->
+            <div class="col-lg-3">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-header bg-primary text-white fw-bold">
+                        <i class="fa-solid fa-layer-group me-2"></i> GIS Layer Control
+                    </div>
+                    <div class="card-body">
+                        <h6 class="fw-bold mb-3 text-secondary">Vector Layers</h6>
+                        <div class="form-check form-switch mb-2">
+                            <input class="form-check-input" type="checkbox" id="layerDangerous" checked>
+                            <label class="form-check-label fw-semibold" for="layerDangerous">
+                                <span class="legend-badge bg-blue me-1"></span> Dangerous Places
+                            </label>
+                        </div>
+                        <div class="form-check form-switch mb-2">
+                            <input class="form-check-input" type="checkbox" id="layerIncidents" checked>
+                            <label class="form-check-label fw-semibold" for="layerIncidents">
+                                <span class="legend-badge bg-red me-1"></span> Date-Based Incidents
+                            </label>
+                        </div>
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" id="layerRoads" checked>
+                            <label class="form-check-label fw-semibold" for="layerRoads">
+                                <span class="legend-line bg-dark me-1"></span> Road Network
+                            </label>
+                        </div>
+
+                        <hr>
+
+                        <h6 class="fw-bold mb-3 text-secondary">Terrain Raster Overlays</h6>
+                        <div class="form-check form-switch mb-2">
+                            <input class="form-check-input" type="checkbox" id="layerHillshade">
+                            <label class="form-check-label fw-semibold" for="layerHillshade">Hillshade Relief</label>
+                        </div>
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" id="layerSlope">
+                            <label class="form-check-label fw-semibold" for="layerSlope">Slope Analysis</label>
+                        </div>
+
+                        <hr>
+
+                        <h6 class="fw-bold mb-3 text-secondary">Symbology Legend</h6>
+                        <ul class="list-unstyled mb-0 small">
+                            <li class="mb-2"><span class="legend-dot bg-fatal me-2"></span> Fatal Accident (Red)</li>
+                            <li class="mb-2"><span class="legend-dot bg-accident me-2"></span> Non-Fatal Accident (Orange)</li>
+                            <li class="mb-2"><span class="legend-dot bg-traffic me-2"></span> Traffic Jam (Yellow)</li>
+                            <li class="mb-2"><span class="legend-dot bg-dang me-2"></span> Dangerous Place (Blue)</li>
+                            <li class="mb-2"><span class="legend-dot bg-blackspot me-2"></span> Blackspot (Green)</li>
+                            <hr class="my-2">
+                            <li class="mb-1"><span class="legend-line bg-dark-gray me-2"></span> Ground Road</li>
+                            <li class="mb-1"><span class="legend-line bg-elevated me-2"></span> Elevated Section</li>
+                            <li class="mb-1"><span class="legend-line bg-embankment me-2"></span> Embankment</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Center Panel: Main Map -->
+            <div class="col-lg-6">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-header bg-white fw-bold d-flex justify-content-between align-items-center">
+                        <span><i class="fa-solid fa-map-location-dot me-2 text-primary"></i> Highway Spatial View</span>
+                        <div id="mouseCoordinates" class="badge bg-light text-dark font-monospace">Lat: --, Lon: --</div>
+                    </div>
+                    <div class="card-body p-0 position-relative">
+                        <div id="map" style="height: 520px; width: 100%;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Panel: Corridor Brief Summary & Critical Hazards -->
+            <div class="col-lg-3">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-header bg-primary text-white fw-bold">
+                        <i class="fa-solid fa-circle-info me-2"></i> Corridor Profile
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-sm table-borderless small mb-3">
+                            <tbody>
+                                <tr><th class="ps-0">Road Name</th><td>A109 Highway</td></tr>
+                                <tr><th class="ps-0">Connects</th><td>Mombasa &rarr; Nairobi</td></tr>
+                                <tr><th class="ps-0">Length</th><td>482 km</td></tr>
+                                <tr><th class="ps-0">Elevation</th><td>19m &rarr; 1,795m</td></tr>
+                            </tbody>
+                        </table>
+
+                        <h6 class="fw-bold mb-2 text-secondary border-bottom pb-1">Steep Terrain Hazard Spots</h6>
+                        <div class="hazard-list mb-3 overflow-auto" style="max-height: 140px;">
+                            <div class="item p-2 mb-1 bg-light rounded small">
+                                <strong>Mlima Kiu / Mazeras / Kanga</strong>
+                                <div class="text-muted">High gradient downslopes leading to brake failure in heavy trucks.</div>
+                            </div>
+                            <div class="item p-2 mb-1 bg-light rounded small">
+                                <strong>Maji ya Chumvi & Tsavo River</strong>
+                                <div class="text-muted">Sharp curves following continuous steep downgrades.</div>
+                            </div>
+                        </div>
+
+                        <h6 class="fw-bold mb-2 text-secondary border-bottom pb-1">Traffic Congestion Hotspots</h6>
+                        <div class="hazard-list overflow-auto" style="max-height: 140px;">
+                            <div class="item p-2 mb-1 bg-light rounded small">
+                                <strong>Changamwe & Mariakani</strong>
+                                <div class="text-muted">Port cargo traffic bottleneck and weighbridge queues.</div>
+                            </div>
+                            <div class="item p-2 mb-1 bg-light rounded small">
+                                <strong>Athi River & Mlolongo</strong>
+                                <div class="text-muted">Urban commute merging with heavy freight traffic.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Analytical Charts Row -->
+        <div class="row g-4 mb-4">
+            <div class="col-lg-6">
+                <div class="card border-0 shadow-sm p-3">
+                    <h6 class="fw-bold text-primary mb-3"><i class="fa-solid fa-chart-column me-2"></i> Road Length by County & Classification (km)</h6>
+                    <div id="chartRoadLength" style="height: 300px;"></div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="card border-0 shadow-sm p-3">
+                    <h6 class="fw-bold text-primary mb-3"><i class="fa-solid fa-chart-bar me-2"></i> Accident Frequency by County</h6>
+                    <div id="chartAccidents" style="height: 300px;"></div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="card border-0 shadow-sm p-3">
+                    <h6 class="fw-bold text-primary mb-3"><i class="fa-solid fa-truck-monster me-2"></i> Vehicle Types Involved in Incidents</h6>
+                    <div id="chartVehicles" style="height: 300px;"></div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="card border-0 shadow-sm p-3">
+                    <h6 class="fw-bold text-primary mb-3"><i class="fa-solid fa-code-compare me-2"></i> Traffic Jams vs. Accident Distribution</h6>
+                    <div id="chartTraffic" style="height: 300px;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recommendations Panel -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-dark text-white fw-bold">
+                <i class="fa-solid fa-lightbulb me-2 text-warning"></i> Strategic Road Safety Recommendations
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <div class="p-3 bg-light rounded border-start border-4 border-primary h-100">
+                            <h6 class="fw-bold text-primary"><i class="fa-solid fa-truck-ramp-box me-2"></i> Truck Escape Ramps</h6>
+                            <p class="small text-muted mb-0">Construct emergency runaway truck ramps at Mlima Kiu, Mazeras, and steep Tsavo descents.</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="p-3 bg-light rounded border-start border-4 border-warning h-100">
+                            <h6 class="fw-bold text-warning"><i class="fa-solid fa-scale-balanced me-2"></i> Weighbridge Expansion</h6>
+                            <p class="small text-muted mb-0">Automate and expand Mariakani and Athi River weighbridges to reduce highway queues.</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="p-3 bg-light rounded border-start border-4 border-danger h-100">
+                            <h6 class="fw-bold text-danger"><i class="fa-solid fa-road me-2"></i> Dedicated Lanes & Separation</h6>
+                            <p class="small text-muted mb-0">Add climbing lanes for slow heavy freight on steep grades and physical median barriers.</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="p-3 bg-light rounded border-start border-4 border-success h-100">
+                            <h6 class="fw-bold text-success"><i class="fa-solid fa-tower-cell me-2"></i> Smart ITS & Safety Signage</h6>
+                            <p class="small text-muted mb-0">Deploy intelligent speed detection, solar hazard lighting, and real-time electronic warning signs.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Footer -->
+    <footer class="app-footer bg-dark text-white py-3 text-center">
+        <div class="container">
+            <p class="mb-0 small fw-semibold">
+                &copy; 2026 Anga Geosystems &bull; GIS &bull; Remote Sensing &bull; Web Mapping Intelligence
+            </p>
+        </div>
+    </footer>
+
+    <!-- JS Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
+
+    <!-- Custom Modular JS Files -->
+    <script src="{{ url_for('static', filename='js/popup.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/layers.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/map.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/statistics.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/filters.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>

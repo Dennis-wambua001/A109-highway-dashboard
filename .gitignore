@@ -1,0 +1,4 @@
+*.tif
+*.tiff
+.conda/
+__pycache__/

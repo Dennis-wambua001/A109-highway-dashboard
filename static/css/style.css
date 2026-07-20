@@ -1,0 +1,92 @@
+:root {
+    --primary-color: #1A237E;
+    --fatal-color: #E74C3C;
+    --accident-color: #F39C12;
+    --traffic-color: #F1C40F;
+    --dang-color: #3498DB;
+    --blackspot-color: #2ECC71;
+    --text-color: #2C3E50;
+    --bg-light: #F8F9FA;
+}
+
+body {
+    background-color: var(--bg-light);
+    color: var(--text-color);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.app-header {
+    background-color: var(--primary-color);
+}
+
+.bg-blue-dark {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* KPI Card Styles */
+.kpi-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border-radius: 10px;
+}
+
+.kpi-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 15px rgba(0,0,0,0.1) !important;
+}
+
+/* Background Badges */
+.bg-light-blue { background-color: #E3F2FD; }
+.bg-light-orange { background-color: #FFF3E0; }
+.bg-light-red { background-color: #FFEBEE; }
+.bg-light-warning { background-color: #FFF8E1; }
+.bg-light-yellow { background-color: #FFFDE7; }
+.bg-light-green { background-color: #E8F5E9; }
+.bg-light-purple { background-color: #F3E5F5; }
+.bg-light-gray { background-color: #ECEFF1; }
+
+.text-amber { color: #E67E22; }
+.text-traffic { color: #F39C12; }
+.text-purple { color: #8E44AD; }
+
+/* Legend Indicators */
+.legend-dot {
+    height: 12px;
+    width: 12px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.legend-badge {
+    height: 10px;
+    width: 10px;
+    display: inline-block;
+    border-radius: 2px;
+}
+
+.legend-line {
+    height: 4px;
+    width: 18px;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.bg-fatal { background-color: var(--fatal-color); }
+.bg-accident { background-color: var(--accident-color); }
+.bg-traffic { background-color: var(--traffic-color); }
+.bg-dang { background-color: var(--dang-color); }
+.bg-blackspot { background-color: var(--blackspot-color); }
+
+.bg-dark-gray { background-color: #555555; }
+.bg-elevated { background-color: #2980B9; }
+.bg-embankment { background-color: #D35400; }
+
+.filter-card {
+    border-radius: 8px;
+}
+
+/* Custom Leaflet Map Adjustments */
+#map {
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+    z-index: 1;
+}
